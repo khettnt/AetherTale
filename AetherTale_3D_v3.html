@@ -1,0 +1,86 @@
+<!doctype html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><title>AetherTale 3D v3</title><style>
+*{box-sizing:border-box;touch-action:none}body{margin:0;overflow:hidden;background:#17263b;font-family:system-ui;color:white}canvas{display:block}
+#hud{position:absolute;top:12px;left:12px;background:#101a2bbd;border:1px solid #ffffff33;border-radius:12px;padding:9px 13px;font-size:12px;pointer-events:none}#hud b{font-size:16px}.bar{height:7px;width:155px;background:#424856;border-radius:9px;margin-top:6px;overflow:hidden}.bar i{display:block;height:100%;width:100%;background:#f06470}
+#hint{position:absolute;top:12px;right:12px;font-size:11px;background:#101a2b9c;border-radius:8px;padding:7px}
+#joy{position:absolute;bottom:24px;left:28px;width:120px;height:120px;border-radius:50%;border:2px solid #ffffff80;background:#ffffff22;display:grid;place-items:center}#stick{width:53px;height:53px;border-radius:50%;background:#b6d8f3aa;border:2px solid white;transform:translate(0,0)}
+#buttons{position:absolute;right:20px;bottom:24px;display:flex;gap:9px;align-items:end}button{border:1px solid #ffffffa0;background:#314a70db;color:white;border-radius:50%;font-weight:700;width:62px;height:62px;font-size:12px}#attack{width:88px;height:88px;background:#b74e60e8;font-size:15px}button:active{filter:brightness(1.5)}#status{position:absolute;left:50%;transform:translateX(-50%);top:15px;font-size:12px;background:#13223a99;padding:8px 12px;border-radius:12px;text-align:center;pointer-events:none}
+@media(max-width:650px){#hint{display:none}#status{top:74px}#joy{left:15px;bottom:18px;width:105px;height:105px}#buttons{right:10px;bottom:17px;gap:5px}button{width:51px;height:51px}#attack{width:72px;height:72px}}
+</style></head><body><div id="hud"><b>⚔ AetherTale 3D</b><div>LV. 1 · Swordsman</div><div class="bar"><i id="hp"></i></div><small id="health">HP 100 / 100</small></div><div id="hint">Landscape recommended · Touch joystick to move</div><div id="status">V3 · Anime Swordsman · 3-Hit Combo</div><div id="joy"><div id="stick"></div></div><div id="buttons"><button id="run">RUN</button><button id="auto">AUTO</button><button id="skill">SKILL</button><button id="attack">ATTACK</button></div>
+<script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js';
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x91c6e1);scene.fog=new THREE.Fog(0x91c6e1,22,55);
+const camera=new THREE.PerspectiveCamera(48,innerWidth/innerHeight,.1,100);const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,1.7));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;document.body.prepend(renderer.domElement);
+scene.add(new THREE.HemisphereLight(0xe7f4ff,0x66804d,2.1));const sun=new THREE.DirectionalLight(0xfff2d2,2.2);sun.position.set(-5,12,7);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);scene.add(sun);
+const mat=(c)=>new THREE.MeshStandardMaterial({color:c,roughness:.8});const grass=mat(0x72a66a),skin=mat(0xf0c4a1),hair=mat(0x27334c),coat=mat(0x31568e),pants=mat(0x343c59),metal=mat(0xcbd9e5),gold=mat(0xe5ba6a);
+function mesh(parent,geo,m,x=0,y=0,z=0){let o=new THREE.Mesh(geo,m);o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;parent.add(o);return o}
+const cube=(w,h,d)=>new THREE.BoxGeometry(w,h,d);
+mesh(scene,new THREE.PlaneGeometry(90,90),grass).rotation.x=-Math.PI/2;
+const grid=new THREE.GridHelper(90,45,0x789f6b,0x789f6b);grid.position.y=.012;grid.material.opacity=.16;grid.material.transparent=true;scene.add(grid);
+for(let i=0;i<26;i++){let a=i*2.4,r=8+(i%4)*2.3,x=Math.cos(a)*r,z=Math.sin(a)*r;let trunk=mesh(scene,new THREE.CylinderGeometry(.16,.25,1.5,7),mat(0x80614b),x,.75,z);mesh(scene,new THREE.ConeGeometry(.95,2.7,7),mat(i%2?0x427b52:0x3f8a64),x,2.5,z)}
+const player=new THREE.Group();scene.add(player);
+const navy=mat(0x284f91),white=mat(0xe7edf5),trim=mat(0xe4bd69),boot=mat(0x342f42),brown=mat(0x74432e),eye=mat(0x243b56);
+const body=mesh(player,new THREE.CylinderGeometry(.32,.42,.94,12),navy,0,1.53,0);
+mesh(player,new THREE.CylinderGeometry(.34,.38,.12,12),trim,0,1.09,0);
+mesh(player,new THREE.BoxGeometry(.34,.65,.06),white,0,1.58,-.33);
+mesh(player,new THREE.BoxGeometry(.45,.12,.12),trim,0,1.85,-.31);
+const head=new THREE.Group();head.position.set(0,2.27,0);player.add(head);
+mesh(head,new THREE.SphereGeometry(.35,20,16),skin);
+mesh(head,new THREE.SphereGeometry(.36,20,12,0,Math.PI*2,0,Math.PI*.49),brown,0,.11,0);
+for(const x of [-.13,.13]){mesh(head,new THREE.SphereGeometry(.043,10,8),eye,x,.015,-.327);mesh(head,new THREE.SphereGeometry(.016,8,6),white,x-.012,.031,-.362);}
+for(const x of [-.24,0,.24])mesh(head,new THREE.ConeGeometry(.13,.29,6),brown,x,.29,-.10).rotation.z=x*.6;
+const leftArm=new THREE.Group(),rightArm=new THREE.Group(),leftLeg=new THREE.Group(),rightLeg=new THREE.Group();
+player.add(leftArm,rightArm,leftLeg,rightLeg);
+leftArm.position.set(-.43,1.88,0);rightArm.position.set(.43,1.88,0);leftLeg.position.set(-.2,1.06,0);rightLeg.position.set(.2,1.06,0);
+for(const arm of [leftArm,rightArm]){mesh(arm,new THREE.CylinderGeometry(.16,.12,.68,10),navy,0,-.34,0);mesh(arm,new THREE.SphereGeometry(.17,12,8),trim,0,-.05,0);mesh(arm,new THREE.SphereGeometry(.12,10,8),skin,0,-.72,0);}
+for(const leg of [leftLeg,rightLeg]){mesh(leg,new THREE.CylinderGeometry(.17,.13,.65,10),white,0,-.31,0);mesh(leg,new THREE.CylinderGeometry(.18,.2,.43,10),boot,0,-.75,0);mesh(leg,new THREE.BoxGeometry(.3,.15,.45),boot,0,-.99,-.1);}
+const sword=new THREE.Group();rightArm.add(sword);sword.position.set(0,-.77,0);
+mesh(sword,new THREE.CylinderGeometry(.055,.06,.35,8),boot,0,-.08,0);
+mesh(sword,new THREE.BoxGeometry(.49,.09,.15),trim,0,-.27,0);
+mesh(sword,new THREE.ConeGeometry(.105,1.1,4),metal,0,-.86,0).rotation.z=Math.PI;
+const slashMat=new THREE.MeshBasicMaterial({color:0x91e9ff,transparent:true,opacity:0,side:THREE.DoubleSide,depthWrite:false});
+const slash=mesh(player,new THREE.TorusGeometry(1.05,.045,6,38,0,Math.PI*1.12),slashMat,0,1.45,-.65);
+slash.rotation.set(.3,0,.2);slash.visible=false;
+let comboStep=0,comboStart=-10000,comboEnd=0,nextComboAt=0,impactDone=false;
+function beginCombo(now){comboStep=(comboStep%3)+1;comboStart=now;comboEnd=now+(comboStep===3?400:300);impactDone=false;attackUntil=comboEnd;}
+player.position.set(0,0,0);const dummy=new THREE.Group();scene.add(dummy);dummy.position.set(3,0,-3);mesh(dummy,new THREE.CylinderGeometry(.6,.75,1.2,10),mat(0xc47763),0,.6,0);mesh(dummy,new THREE.SphereGeometry(.47,12,10),mat(0xc47763),0,1.55,0);
+const ring=mesh(scene,new THREE.TorusGeometry(.78,.055,8,32),mat(0xf9d36c),3,.035,-3);ring.rotation.x=-Math.PI/2;
+let dummyHP=100, dummyAlive=true, respawnAt=0, nextHitAt=0;
+const enemyBar=document.createElement('div');
+enemyBar.style.cssText='position:absolute;width:94px;height:10px;background:#2b2633;border:2px solid #fff9;border-radius:8px;overflow:hidden;pointer-events:none;transform:translate(-50%,-50%);';
+const enemyFill=document.createElement('div');enemyFill.style.cssText='height:100%;width:100%;background:linear-gradient(90deg,#db3b57,#ff7585);transition:width .15s';enemyBar.appendChild(enemyFill);document.body.appendChild(enemyBar);
+function updateEnemy(){enemyFill.style.width=dummyHP+'%';enemyBar.style.display=dummyAlive?'block':'none';}
+function hit(damage){if(!dummyAlive)return;const dist=player.position.distanceTo(dummy.position);if(dist>2.5){status.textContent='เข้าใกล้มอนสเตอร์ก่อนโจมตี';return;}dummyHP=Math.max(0,dummyHP-damage);status.textContent='⚔ Combo '+comboStep+' · Hit!';updateEnemy();if(dummyHP===0){dummyAlive=false;dummy.visible=false;ring.visible=false;respawnAt=performance.now()+3000;status.textContent='🏆 Monster defeated!';updateEnemy();}}
+updateEnemy();
+const joy=document.getElementById('joy'),stick=document.getElementById('stick');let move={x:0,y:0},pointer=null,running=false,auto=false,attackUntil=0,skillUntil=0,health=100;
+function joystick(e){const b=joy.getBoundingClientRect(),cx=b.left+b.width/2,cy=b.top+b.height/2;let dx=e.clientX-cx,dy=e.clientY-cy;let len=Math.hypot(dx,dy),max=b.width*.32;if(len>max){dx*=max/len;dy*=max/len}stick.style.transform=`translate(${dx}px,${dy}px)`;move.x=dx/max;move.y=dy/max}
+joy.addEventListener('pointerdown',e=>{pointer=e.pointerId;joy.setPointerCapture(pointer);joystick(e)});joy.addEventListener('pointermove',e=>{if(e.pointerId===pointer)joystick(e)});function reset(e){if(e.pointerId===pointer){pointer=null;move.x=move.y=0;stick.style.transform='translate(0,0)'}}joy.addEventListener('pointerup',reset);joy.addEventListener('pointercancel',reset);
+const status=document.getElementById('status');document.getElementById('run').onclick=()=>{running=!running;document.getElementById('run').style.background=running?'#4c986a':'#314a70db'};document.getElementById('auto').onclick=()=>{auto=!auto;document.getElementById('auto').style.background=auto?'#4c986a':'#314a70db'};document.getElementById('attack').onclick=()=>{let now=performance.now();if(now>=comboEnd){beginCombo(now);}};document.getElementById('skill').onclick=()=>{let now=performance.now();if(now>=comboEnd){beginCombo(now);skillUntil=now+650;}};
+const clock=new THREE.Clock();let elapsed=0;function animate(){requestAnimationFrame(animate);let dt=Math.min(clock.getDelta(),.05),now=performance.now();elapsed+=dt;let mx=move.x,my=move.y;if(!dummyAlive&&now>=respawnAt){dummyHP=100;dummyAlive=true;dummy.visible=true;ring.visible=true;updateEnemy();}
+if(auto&&Math.hypot(mx,my)<.05&&dummyAlive){
+ let dx=dummy.position.x-player.position.x,dz=dummy.position.z-player.position.z,dist=Math.hypot(dx,dz);
+ if(dist>1.85){mx=dx/dist;my=dz/dist;}else{
+  player.rotation.y=Math.atan2(dx,-dz);
+  if(now>=nextHitAt&&now>=comboEnd){beginCombo(now);nextHitAt=comboEnd+35;}
+ }
+}
+let len=Math.hypot(mx,my);if(len>.08){let speed=running?5.8:3.1;player.position.x+=mx/len*speed*dt;player.position.z+=my/len*speed*dt;player.position.x=THREE.MathUtils.clamp(player.position.x,-18,18);player.position.z=THREE.MathUtils.clamp(player.position.z,-18,18);player.rotation.y=Math.atan2(mx,-my)}
+let swing=len>.08?Math.sin(elapsed*(running?15:9))*.58:0;leftLeg.rotation.x=swing;rightLeg.rotation.x=-swing;leftArm.rotation.x=-swing*.65;rightArm.rotation.x=swing*.65;
+const active=now<comboEnd,phase=active?THREE.MathUtils.clamp((now-comboStart)/(comboEnd-comboStart),0,1):0;
+if(active){
+ const sw=Math.sin(phase*Math.PI),side=comboStep===1?1:comboStep===2?-1:0;
+ rightArm.rotation.x=-.9-sw*(comboStep===3?1.6:.7);
+ rightArm.rotation.z=side*(.8-1.6*phase)+(comboStep===3?-.4:0);
+ body.rotation.y=side*Math.sin(phase*Math.PI)*.18;
+ sword.rotation.z=side*.35;
+ slash.visible=true;slash.material.opacity=sw*.82;slash.rotation.z=comboStep===3?Math.PI/2:side*(phase*1.8-.8);
+ slash.scale.setScalar(comboStep===3?1.15:1);
+ if(!impactDone&&phase>=.52){impactDone=true;hit(comboStep===3?30:20);}
+}else{rightArm.rotation.z=0;sword.rotation.z=0;body.rotation.y=0;slash.visible=false;slash.material.opacity=0;}
+body.position.y=1.43+(len>.08?Math.abs(Math.sin(elapsed*10))*.055:0);ring.material.color.setHex(now<skillUntil?0x73eaff:0xf9d36c);
+camera.position.lerp(new THREE.Vector3(player.position.x+7,player.position.y+9,player.position.z+12),.07);camera.lookAt(player.position.x,1,player.position.z);
+if(dummyAlive){const screen=dummy.position.clone().add(new THREE.Vector3(0,2.25,0)).project(camera);
+enemyBar.style.left=((screen.x+1)*innerWidth/2)+'px';enemyBar.style.top=((-screen.y+1)*innerHeight/2)+'px';
+enemyBar.style.display=(screen.z<1&&screen.z>-1)?'block':'none';}
+renderer.render(scene,camera)}
+animate();addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
+</script></body></html>
