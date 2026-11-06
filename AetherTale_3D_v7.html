@@ -1,0 +1,82 @@
+<!doctype html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><title>AetherTale 3D V7</title><style>
+*{box-sizing:border-box}body{margin:0;overflow:hidden;background:#91c8de;font-family:system-ui,sans-serif;touch-action:none}canvas{display:block}.hud{position:absolute;top:16px;left:14px;background:#152a40d9;color:white;border-radius:14px;padding:12px 16px;min-width:210px}.hud b{font-size:19px}.small{font-size:12px;opacity:.85}.bar{height:11px;background:#313b4b;border-radius:12px;overflow:hidden;margin:8px 0 3px}.fill{height:100%;background:#fa627d;width:100%;transition:width .12s}.controls{position:absolute;bottom:22px;right:12px;display:flex;gap:7px;align-items:end}.controls button{border:2px solid #ffffff80;color:white;background:#375776c9;border-radius:50%;width:65px;height:65px;font-weight:700}.controls button.active{background:#36a37d}.controls #attack{width:85px;height:85px;background:#bc4d69}.stick{position:absolute;bottom:26px;left:22px;width:112px;height:112px;border:3px solid #ffffff90;border-radius:50%;background:#ffffff20;touch-action:none}.nub{position:absolute;left:30px;top:30px;width:48px;height:48px;border:2px solid white;background:#c2e8f0b0;border-radius:50%}.notice{position:absolute;top:120px;left:50%;transform:translateX(-50%);color:white;background:#1b3249bb;padding:8px 14px;border-radius:10px;white-space:nowrap;font-size:13px}.error{position:absolute;top:45%;left:8%;width:84%;color:white;background:#813b3b;padding:20px;border-radius:12px;display:none}</style></head><body>
+<div class="hud"><b>⚔ AetherTale 3D V7</b><div class="small">LV. 1 · Swordsman</div><div class="bar"><div class="fill"></div></div><div class="small">HP 100 / 100 · Smooth joystick facing + AUTO RUN</div></div><div class="notice" id="status">AUTO: ON · 3-hit combo</div><div class="stick" id="stick"><div class="nub" id="nub"></div></div><div class="controls"><button id="run">RUN</button><button class="active" id="auto">AUTO</button><button id="skill">SKILL</button><button id="attack">ATTACK</button></div><div id="error" class="error"></div>
+<script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js';
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x92c8e4);scene.fog=new THREE.Fog(0x92c8e4,23,65);
+const camera=new THREE.PerspectiveCamera(48,innerWidth/innerHeight,.1,120);
+const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(devicePixelRatio,1.6));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;document.body.prepend(renderer.domElement);
+scene.add(new THREE.HemisphereLight(0xffffff,0x5b8b69,2.3));const sun=new THREE.DirectionalLight(0xffffff,2);sun.position.set(-5,13,9);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);sun.shadow.camera.left=-22;sun.shadow.camera.right=22;sun.shadow.camera.top=22;sun.shadow.camera.bottom=-22;scene.add(sun);
+const mat=(c)=>new THREE.MeshStandardMaterial({color:c,roughness:.8});const blue=mat(0x225ba4),white=mat(0xf1f0e6),gold=mat(0xe5bc60),skin=mat(0xf0b28e),hair=mat(0x70422b),boot=mat(0x252238),steel=mat(0xdcefff);
+function part(parent,geo,material,x,y,z){const m=new THREE.Mesh(geo,material);m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;parent.add(m);return m}
+function box(parent,w,h,d,m,x,y,z){return part(parent,new THREE.BoxGeometry(w,h,d),m,x,y,z)}
+function sphere(parent,r,m,x,y,z){return part(parent,new THREE.SphereGeometry(r,12,9),m,x,y,z)}
+const ground=part(scene,new THREE.PlaneGeometry(160,160),mat(0x80b773),0,0,0);ground.rotation.x=-Math.PI/2;
+let seed=11;function rand(){seed=(seed*1664525+1013904223)>>>0;return seed/4294967296}
+for(let i=0;i<48;i++){let x=(rand()-.5)*55,z=(rand()-.5)*55;if(Math.abs(x)<5&&Math.abs(z)<6)continue;const tree=new THREE.Group();tree.position.set(x,0,z);scene.add(tree);part(tree,new THREE.CylinderGeometry(.13,.18,1.3,6),mat(0x79553d),0,.65,0);part(tree,new THREE.ConeGeometry(.9,2.7,6),mat(0x237452),0,2.25,0)}
+const hero=new THREE.Group();scene.add(hero);hero.position.set(1.1,0,2.2);const body=new THREE.Group();hero.add(body);
+box(body,.72,.95,.42,blue,0,1.48,0);box(body,.75,.17,.45,gold,0,1.05,0);box(body,.55,.24,.47,white,0,1.95,0);
+sphere(body,.34,skin,0,2.35,0);sphere(body,.36,hair,0,2.58,-.035);box(body,.14,.10,.05,boot,-.13,2.37,.315);box(body,.14,.10,.05,boot,.13,2.37,.315);
+const leftArm=new THREE.Group(),rightArm=new THREE.Group();leftArm.position.set(-.48,1.83,0);rightArm.position.set(.48,1.83,0);body.add(leftArm,rightArm);
+sphere(leftArm,.18,gold,0,0,0);sphere(rightArm,.18,gold,0,0,0);box(leftArm,.23,.67,.25,white,0,-.39,0);box(rightArm,.23,.67,.25,white,0,-.39,0);
+const leftLeg=new THREE.Group(),rightLeg=new THREE.Group();leftLeg.position.set(-.21,1.01,0);rightLeg.position.set(.21,1.01,0);body.add(leftLeg,rightLeg);box(leftLeg,.29,.7,.32,white,0,-.35,0);box(rightLeg,.29,.7,.32,white,0,-.35,0);box(leftLeg,.34,.27,.48,boot,0,-.78,.1);box(rightLeg,.34,.27,.48,boot,0,-.78,.1);
+// Hero's visible face is local +Z (eyes are at +Z); the sword swings toward local +Z.
+const sword=new THREE.Group();sword.position.set(0,-.75,0);rightArm.add(sword);box(sword,.15,.45,.15,gold,0,-.12,0);box(sword,.12,.92,.10,steel,0,-.8,0);box(sword,.44,.10,.15,gold,0,-.37,0);
+const trailMat=new THREE.MeshBasicMaterial({color:0x83eaff,transparent:true,opacity:0,side:THREE.DoubleSide,depthWrite:false});const trail=part(sword,new THREE.PlaneGeometry(.15,1.1),trailMat,0,-.87,0);trail.rotation.z=.3;
+const monster=new THREE.Group();scene.add(monster);monster.position.set(-1.1,0,-.7);const enemyMat=mat(0xb76f60);part(monster,new THREE.CylinderGeometry(.54,.67,1.13,10),enemyMat,0,.58,0);sphere(monster,.52,mat(0xd88b73),0,1.25,0);
+const hpCanvas=document.createElement('canvas');hpCanvas.width=256;hpCanvas.height=32;const hpCtx=hpCanvas.getContext('2d');const hpTexture=new THREE.CanvasTexture(hpCanvas);const hpSprite=new THREE.Sprite(new THREE.SpriteMaterial({map:hpTexture,transparent:true,depthTest:false}));hpSprite.scale.set(1.7,.23,1);hpSprite.position.set(0,2.12,0);monster.add(hpSprite);
+let hp=100;function drawHP(){hpCtx.clearRect(0,0,256,32);hpCtx.fillStyle='#252d3a';hpCtx.fillRect(3,4,250,24);hpCtx.fillStyle='#f26682';hpCtx.fillRect(7,8,242*hp/100,16);hpTexture.needsUpdate=true}drawHP();
+let auto=true,combo=0,attackTime=0,elapsed=0,respawn=0,run=false,stickX=0,stickY=0,manual=false;
+const status=document.getElementById('status');function setStatus(s){status.textContent=s}
+document.getElementById('auto').onclick=()=>{auto=!auto;document.getElementById('auto').classList.toggle('active',auto);updateModeStatus()};
+document.getElementById('attack').onclick=()=>{auto=false;document.getElementById('auto').classList.remove('active');if(attackTime<=0)startAttack()};
+// RUN toggle: one tap enables sprint until the next tap, in AUTO and manual modes.
+const runButton=document.getElementById('run');
+function setRun(enabled){run=enabled;runButton.classList.toggle('active',run);runButton.setAttribute('aria-pressed',String(run));updateModeStatus()}
+function updateModeStatus(){setStatus(`AUTO: ${auto?'ON':'OFF'} · RUN: ${run?'ON':'OFF'}`)}
+runButton.addEventListener('click',e=>{e.preventDefault();setRun(!run)});
+runButton.setAttribute('aria-pressed','false');
+document.getElementById('skill').onclick=()=>setStatus('SKILL: coming later · V7 focuses on smooth turning');
+const stick=document.getElementById('stick'),nub=document.getElementById('nub');function moveStick(e){const r=stick.getBoundingClientRect(),dx=e.clientX-(r.left+r.width/2),dy=e.clientY-(r.top+r.height/2),len=Math.hypot(dx,dy),k=Math.min(1,44/(len||1));stickX=dx*k/44;stickY=dy*k/44;nub.style.transform=`translate(${dx*k}px,${dy*k}px)`}stick.onpointerdown=e=>{stick.setPointerCapture(e.pointerId);manual=true;moveStick(e)};stick.onpointermove=e=>{if(manual)moveStick(e)};function stopStick(){manual=false;stickX=stickY=0;nub.style.transform=''}stick.onpointerup=stopStick;stick.onpointercancel=stopStick;
+const combos=[.30,.30,.40];function startAttack(){if(hp<=0)return;aimAtEnemy(1);combo=(combo%3)+1;attackTime=combos[combo-1];setStatus('⚔ Combo '+combo+' · Hit!');}
+// Turn toward a world-space movement direction using the model's local +Z front.
+function turnToward(dx,dz,dt,speed=12){
+ if(Math.hypot(dx,dz)<0.001)return;
+ const target=Math.atan2(dx,dz);
+ const delta=Math.atan2(Math.sin(target-hero.rotation.y),Math.cos(target-hero.rotation.y));
+ hero.rotation.y+=delta*(1-Math.exp(-speed*Math.max(0,dt)));
+}
+function aimAtEnemy(dt){turnToward(monster.position.x-hero.position.x,monster.position.z-hero.position.z,dt,15)}
+let last=performance.now(),hitDone=false;
+function frame(now){requestAnimationFrame(frame);const dt=Math.min(.05,(now-last)/1000);last=now;elapsed+=dt;
+const dx=monster.position.x-hero.position.x,dz=monster.position.z-hero.position.z,dist=Math.hypot(dx,dz);
+let walking=false;const movementSpeed=run?4.5:2.5;
+const manualMoving=manual&&Math.hypot(stickX,stickY)>.15;
+if(manualMoving){
+ hero.position.x+=stickX*dt*movementSpeed;hero.position.z+=stickY*dt*movementSpeed;walking=true;
+}else if(auto&&hp>0&&dist>1.45){
+ const step=Math.min(Math.max(0,dist-1.45),dt*movementSpeed);
+ hero.position.x+=dx/dist*step;hero.position.z+=dz/dist*step;walking=true;
+}
+// Attack faces its target; otherwise manual joystick takes priority over AUTO facing.
+if(attackTime>0)aimAtEnemy(dt);
+else if(manualMoving)turnToward(stickX,stickY,dt,12);
+else if(auto&&!manual)aimAtEnemy(dt);
+const currentDist=Math.hypot(monster.position.x-hero.position.x,monster.position.z-hero.position.z);
+if(auto&&hp>0&&currentDist<=1.65&&attackTime<=0)startAttack();
+if(attackTime>0){const duration=combos[combo-1],phase=1-attackTime/duration;attackTime-=dt;
+ // all swings face the target: shoulder rotates forward, sword remains in front of torso
+ body.rotation.y=(combo===1?-.24:combo===2?.24:0)*Math.sin(phase*Math.PI);
+ rightArm.rotation.x=-1.4-1.05*Math.sin(phase*Math.PI);
+ rightArm.rotation.z=(combo===1?-.95:combo===2?.95:.06)*Math.cos(phase*Math.PI);
+ rightArm.rotation.y=(combo===1?-.5:combo===2?.5:0)*Math.sin(phase*Math.PI);
+ leftArm.rotation.x=-.3*Math.sin(phase*Math.PI);
+ trailMat.opacity=.55*Math.sin(phase*Math.PI);
+ if(phase>.5&&!hitDone&&currentDist<2.2){hitDone=true;hp=Math.max(0,hp-20);drawHP();if(hp===0){respawn=.9;setStatus('Monster defeated · respawning')}}
+ if(attackTime<=0){attackTime=0;hitDone=false}
+}else{body.rotation.y*=.78;rightArm.rotation.x+=(0-rightArm.rotation.x)*.23;rightArm.rotation.z*=.77;rightArm.rotation.y*=.77;leftArm.rotation.x*=.8;trailMat.opacity=0}
+leftLeg.rotation.x=walking?Math.sin(elapsed*10)*.5:0;rightLeg.rotation.x=-leftLeg.rotation.x;body.position.y=walking?Math.abs(Math.sin(elapsed*10))*.05:0;
+if(hp<=0){respawn-=dt;if(respawn<=0){hp=100;drawHP();monster.position.set(-1.1+(Math.sin(elapsed)*.8),0,-.7);combo=0}}
+const follow=new THREE.Vector3(hero.position.x+5.2,6.5,hero.position.z+8.7);camera.position.lerp(follow,Math.min(1,dt*3.8));camera.lookAt(hero.position.x,1.2,hero.position.z-1.3);renderer.render(scene,camera)}
+updateModeStatus();requestAnimationFrame(frame);window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
+</script></body></html>
